@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="TinyEngine"/>
+    <Type Value="RunAndDesignTime"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="../source;../source/camera"/>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Files>
+      <Item>
+        <Filename Value="tedescription.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="teDescription"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/teApplication.pas"/>
+        <UnitName Value="teApplication"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/temodelengine.pas"/>
+        <UnitName Value="teModelEngine"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/camera/rlfpcamera.pas"/>
+        <UnitName Value="rlFPCamera"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/camera/rlfreecamera.pas"/>
+        <UnitName Value="rlFreeCamera"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/camera/rltpcamera.pas"/>
+        <UnitName Value="rlTPCamera"/>
+      </Item>
+    </Files>
+    <RequiredPkgs>
+      <Item>
+        <PackageName Value="IDEIntf"/>
+      </Item>
+      <Item>
+        <PackageName Value="ray4laz"/>
+      </Item>
+      <Item>
+        <PackageName Value="FCL"/>
+      </Item>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
