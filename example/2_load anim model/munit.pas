@@ -5,7 +5,7 @@ unit munit;
 interface
 
 uses
-  cmem, raylib, teApplication, teModelEngine;
+  cmem, raylib, teApplication, teModelEngine, sysutils;
 
 type
 TGame = class(TTinyApplication)
@@ -13,7 +13,7 @@ TGame = class(TTinyApplication)
   protected
     Engine: TTinyModelEngine;
     Camera:TCamera;
-    Model:TTinyModel;
+    Model:TTinyAnimatedModel;
   public
     constructor Create; override;
     procedure Init; override;
@@ -47,8 +47,11 @@ begin
    SetCameraMode(Camera, CAMERA_ORBITAL);
 
 
-   Model:=TTinyModel.Create(Engine);
+   Model:=TTinyAnimatedModel.Create(Engine);
    Model.LoadModel('data/models/test.m3d');
+   Model.AnimationLoop:=true;
+   Model.AnimationIndex:=0;
+   Model.AnimationSpeed:=30 ;
 end;
 
 procedure TGame.Update;
@@ -58,12 +61,26 @@ begin
   UpdateCamera(@camera);
 
   Engine.Update;
+
+  If IsKeyPressed(KEY_UP) then Model.AnimationIndex:=Model.AnimationIndex + 1;
+  If IsKeyPressed(KEY_DOWN) then Model.AnimationIndex:=Model.AnimationIndex - 1;
+
+  If IsKeyPressed(KEY_LEFT) then Model.AnimationSpeed:=Model.AnimationSpeed - 1;
+  If IsKeyPressed(KEY_RIGHT) then Model.AnimationSpeed:=Model.AnimationSpeed + 1;
+
 end;
 
 procedure TGame.Render;
 begin
   inherited Render;
   Engine.Render(Camera);
+
+  DrawText(PChar('Press UP or DOWN to change model animation index'),10,10,10,BLACK);
+  DrawText(PChar('Press LEFT or RIGHT to change model speed animation'),10,20,10,BLACK);
+
+  DrawText(PChar('Animation index = ' + IntTostr(Model.AnimationIndex))  ,10,40,10, RED);
+  DrawText(PChar('Animation speed = ' + FloatTostr(Model.AnimationSpeed))  ,10,50,10, RED);
+
   DrawText('(c) model by @quaternius', 660 , 580, 10, GRAY);
 end;
 
