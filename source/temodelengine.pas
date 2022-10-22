@@ -10,7 +10,8 @@ uses
 
 type
   TTinyEngineDrawMode = (dmNormal, dmEx, dmWires, dmWiresEx); // draw model mode
-  TTinyModelCollisionMode = (cmBBox,cmSphere);
+  TTinyModelCollisionMode = (cmBBox,cmSphere);   // collision mode
+  TTinyModelJumpState = (jsNone, jsJumping, jsFalling); // state for jump
 
   TTinyModel = class;
 
@@ -18,12 +19,14 @@ type
 
   TTinyModelEngine = class
     private
+      FDrawBebugModel: Boolean;
       FDrawDebugGrid: boolean;
       FDrawDistance: single;
       FDrawSkeleton: boolean;
       FGridSlice: longint;
       FGridSpace: single;
 
+      procedure SetDrawBebugModel(AValue: Boolean);
       procedure SetDrawDebugGrid(AValue: boolean);
       procedure SetDrawDistance(AValue: single);
       procedure SetDrawSkeleton(AValue: boolean);
@@ -39,9 +42,10 @@ type
       procedure ClearDeadModel;  // clear of death model
       procedure SetDebugGrid(slices:longint; spacing:single); // set grid size and slice
     published
-      property DrawSkeleton: boolean read FDrawSkeleton write SetDrawSkeleton;
-      property DrawDebugGrid: boolean read FDrawDebugGrid write SetDrawDebugGrid;
-      property DrawDistance: single read FDrawDistance write SetDrawDistance;
+      property DrawSkeleton: Boolean read FDrawSkeleton write SetDrawSkeleton;
+      property DrawDebugGrid: Boolean read FDrawDebugGrid write SetDrawDebugGrid;
+      property DrawBebugModel: Boolean read FDrawBebugModel write SetDrawBebugModel;
+      property DrawDistance: Single read FDrawDistance write SetDrawDistance;
   end;
 
   { TTinyModel }
@@ -51,7 +55,11 @@ type
       FCollisionBBox: TBoundingBox;
       FCollisioned: Boolean;
       FCollisionMode: TTinyModelCollisionMode;
+      FCollisionRadius: Single;
+      FCollisionSphere: TVector3;
+      FDebugDraw: Boolean;
       FDrawMode: TTinyEngineDrawMode;
+      FName: String;
       FPosition: TVector3;
       FRotationAngle: single;
       FRotationAxis: TVector3;
@@ -61,7 +69,11 @@ type
       function GetPositionZ: Single;
       procedure SetCollisionBBox(AValue: TBoundingBox);
       procedure SetCollisionMode(AValue: TTinyModelCollisionMode);
+      procedure SetCollisionRadius(AValue: Single);
+      procedure SetCollisionSphere(AValue: TVector3);
+      procedure SetDebugDraw(AValue: Boolean);
       procedure SetDrawMode(AValue: TTinyEngineDrawMode);
+      procedure SetName(AValue: String);
       procedure SetPosition(AValue: TVector3);
       procedure SetPositionX(AValue: Single);
       procedure SetPositionY(AValue: Single);
@@ -95,10 +107,14 @@ type
       property PositionZ: Single read GetPositionZ write SetPositionZ;
       property RotationAngle: single read FRotationAngle write SetRotationAngle;
       property Scale: Single read FScale write SetScale;
+      property Name: String read FName write SetName;
+      property DebugDraw: Boolean read FDebugDraw write SetDebugDraw;
 
       property Collisioned: Boolean read FCollisioned write FCollisioned;
       property CollisionMode: TTinyModelCollisionMode read FCollisionMode write SetCollisionMode;
       property CollisionBBox: TBoundingBox read FCollisionBBox write SetCollisionBBox;
+      property CollisionSphere: TVector3 read FCollisionSphere write SetCollisionSphere;
+      property CollisionRadius: Single read FCollisionRadius write SetCollisionRadius;
   end;
 
   
@@ -127,10 +143,252 @@ type
     property AnimationLoop: Boolean read FAnimationLoop write SetAnimationLoop;
   end;
 
+  { TTinyPlayerModel }
+
+  TTinyPlayerModel = class(TTinyAnimatedModel)
+  private
+    FAcc: Single;
+    FDcc: Single;
+    FDirection: Single;
+    FMaxSpeed: Single;
+    FMinSpeed: Single;
+    FRotation: Single;
+    FSpeed: Single;
+    FVelocity: TVector3;
+    procedure SetDirection(AValue: Single);
+    procedure SetRotation(AValue: Single);
+    procedure SetSpeed(AValue: Single);
+  public
+    constructor Create(Engine: TTinyModelEngine); override;
+    procedure Update; override;
+    procedure Accelerate; virtual;
+    procedure Deccelerate; virtual;
+    property Speed: Single read FSpeed write SetSpeed;
+    property MinSpeed: Single read FMinSpeed write FMinSpeed;
+    property MaxSpeed: Single read FMaxSpeed write FMaxSpeed;
+    property Velocity: TVector3 read FVelocity write FVelocity;
+    property Acceleration: Single read FAcc write FAcc;
+    property Decceleration: Single read FDcc write FDcc;
+    property Direction: Single read FDirection write SetDirection;
+    property Rotation: Single read FRotation write SetRotation;
+  end;
+
+    { TTinyJumperModel }
+    TTinyJumperModel = class(TTinyPlayerModel)
+     private
+         FJumpCount: Integer;
+         FJumpSpeed: Single;
+         FJumpHeight: Single;
+         FMaxFallSpeed: Single;
+         FDoJump: Boolean;
+         FJumpState: TTinyModelJumpState;
+         procedure SetJumpState(Value: TTinyModelJumpState);
+    public
+         constructor Create(Engine: TTinyModelEngine); override;
+         procedure Update; override;
+         procedure Accelerate; override;
+         procedure Deccelerate; override;
+         property JumpCount: Integer read FJumpCount write FJumpCount;
+         property JumpState: TTinyModelJumpState read FJumpState write SetJumpState;
+         property JumpSpeed: Single read FJumpSpeed write FJumpSpeed;
+         property JumpHeight: Single read FJumpHeight write FJumpHeight;
+         property MaxFallSpeed: Single read FMaxFallSpeed write FMaxFallSpeed;
+         property DoJump: Boolean read  FDoJump write FDoJump;
+    end;
 
 
+  var    cosTable : array[ 0..360 ] of Single;
+         sinTable : array[ 0..360 ] of Single;
 
 implementation
+uses Math;
+
+function m_Cos(Angle: Integer): Single;
+begin
+   if Angle > 360 Then
+    DEC( Angle, ( Angle div 360 ) * 360 )
+  else
+    if Angle < 0 Then
+      INC( Angle, ( abs( Angle ) div 360 + 1 ) * 360 );
+  Result := cosTable[ Angle ];
+end;
+
+function m_Sin(Angle: Integer): Single;
+begin
+  if Angle > 360 Then
+    DEC( Angle, ( Angle div 360 ) * 360 )
+  else
+    if Angle < 0 Then
+      INC( Angle, ( abs( Angle ) div 360 + 1 ) * 360 );
+  Result := sinTable[ Angle ];
+end;
+
+procedure InitCosSinTables;
+var
+  i         : Integer;
+  rad_angle : Single;
+begin
+for i := 0 to 360 do
+  begin
+    rad_angle := i * ( pi / 180 );
+    cosTable[ i ] := cos( rad_angle );
+    sinTable[ i ] := sin( rad_angle );
+  end;
+end;
+
+{ TTinyJumperModel }
+
+procedure TTinyJumperModel.SetJumpState(Value: TTinyModelJumpState);
+begin
+  if FJumpState <> Value then
+    begin
+         FJumpState := Value;
+         case Value of
+              jsNone,
+              jsFalling:
+              begin
+                FVelocity.Y := 0;
+              end;
+         end;
+    end;
+end;
+
+constructor TTinyJumperModel.Create(Engine: TTinyModelEngine);
+begin
+  inherited Create(Engine);
+  FVelocity.X := 0;
+  FVelocity.Y := 0;
+  MaxSpeed := FMaxSpeed;
+  FDirection := 0;
+  FJumpState := jsNone;
+  FJumpSpeed := 0.25;
+  FJumpHeight := 5;
+  Acceleration := 0.2;
+  Decceleration := 0.2;
+  FMaxFallSpeed := 10;
+  DoJump:= False;
+end;
+
+procedure TTinyJumperModel.Update;
+begin
+  case FJumpState of
+     jsNone:
+       begin
+         if DoJump then
+         begin
+           FJumpState := jsJumping;
+           FVelocity.Y := + FJumpHeight;
+         end;
+       end;
+     jsJumping:
+       begin
+         FPosition.Y := FPosition.Y + FVelocity.Y * GetFrameTime;
+         FVelocity.Y := FVelocity.Y + FJumpSpeed;
+         if Velocity.Y > 0 then
+           FJumpState := jsFalling;
+       end;
+     jsFalling:
+       begin
+         FPosition.Y := FPosition.Y + FVelocity.Y * GetFrameTime;
+         FVelocity.Y := FVelocity.Y - FJumpSpeed;
+         if FVelocity.Y > FMaxFallSpeed then
+            FVelocity.Y := FMaxFallSpeed;
+       end;
+   end;
+   DoJump := False;
+
+   inherited Update;
+end;
+
+procedure TTinyJumperModel.Accelerate;
+begin
+  inherited Accelerate;
+end;
+
+procedure TTinyJumperModel.Deccelerate;
+begin
+  inherited Deccelerate;
+{  if FSpeed <> FMaxSpeed then
+    begin
+      FSpeed:= FSpeed+FAcc;
+      if FSpeed < FMaxSpeed then FSpeed := FMaxSpeed;
+        FVelocity.X := m_Sin(Trunc(FDirection)) * Speed;
+        FVelocity.Z := m_Sin(Trunc(FDirection)) * Speed;
+     end;}
+end;
+
+{ TTinyPlayerModel }
+
+procedure TTinyPlayerModel.SetDirection(AValue: Single);
+begin
+  FDirection := AValue;
+  FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
+  FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.y := sin(DEG2RAD * -FRotation) * Speed ;
+end;
+
+procedure TTinyPlayerModel.SetRotation(AValue: Single);
+begin
+  if FRotation=AValue then Exit;
+  FRotation:=AValue;
+end;
+
+procedure TTinyPlayerModel.SetSpeed(AValue: Single);
+begin
+  if FSpeed > FMaxSpeed then FSpeed := FMaxSpeed
+  else
+  if FSpeed < FMinSpeed then  FSpeed := FMinSpeed;
+  FSpeed := AValue;
+  FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
+  FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.y := sin(DEG2RAD * -FRotation) * Speed ;
+end;
+
+constructor TTinyPlayerModel.Create(Engine: TTinyModelEngine);
+begin
+  inherited Create(Engine);
+  FVelocity:=Vector3Create(0,0,0);
+  Direction:=0;
+  Acceleration:=0;
+  Decceleration:=0;
+  Speed:=0;
+  MinSpeed:=0;
+  MaxSpeed:=0;
+end;
+
+procedure TTinyPlayerModel.Update;
+begin
+  inherited Update;
+  FPosition.x := FPosition.x + FVelocity.x * GetFrameTime;
+  FPosition.z := FPosition.z + FVelocity.z * GetFrameTime;
+  FPosition.y := FPosition.y + FVelocity.y * GetFrameTime;
+end;
+
+procedure TTinyPlayerModel.Accelerate;
+begin
+  if FSpeed <> FMaxSpeed then
+ begin
+   FSpeed := FSpeed + FAcc;
+   if FSpeed > FMaxSpeed then
+   FSpeed := FMaxSpeed;
+   FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
+   FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+   FVelocity.y := sin(DEG2RAD * -FRotation) * Speed;
+ end;
+end;
+
+procedure TTinyPlayerModel.Deccelerate;
+begin
+  if FSpeed <> FMinSpeed then
+ begin
+   FSpeed := FSpeed - FDcc;
+   if FSpeed < FMinSpeed then
+   FSpeed := FMinSpeed;
+   FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
+   FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+   FVelocity.y := sin(DEG2RAD * -FRotation) * Speed;
+ end;
+end;
 
 { TTinyAnimatedModel }
 
@@ -227,6 +485,12 @@ begin
   FDrawMode:=AValue;
 end;
 
+procedure TTinyModel.SetName(AValue: String);
+begin
+  if FName=AValue then Exit;
+  FName:=AValue;
+end;
+
 function TTinyModel.GetPositionX: Single;
 begin
   result:=Fposition.x;
@@ -253,6 +517,23 @@ begin
   FCollisionMode:=AValue;
 end;
 
+procedure TTinyModel.SetCollisionRadius(AValue: Single);
+begin
+  if FCollisionRadius=AValue then Exit;
+  FCollisionRadius:=AValue;
+end;
+
+procedure TTinyModel.SetCollisionSphere(AValue: TVector3);
+begin
+  FCollisionSphere:=AValue;
+end;
+
+procedure TTinyModel.SetDebugDraw(AValue: Boolean);
+begin
+  if FDebugDraw=AValue then Exit;
+  FDebugDraw:=AValue;
+end;
+
 procedure TTinyModel.SetScale(AValue: Single);
 begin
   if FScale=AValue then Exit;
@@ -262,12 +543,25 @@ end;
 procedure TTinyModel.Collision(const OtherModel: TTinyModel);
 var
     IsCollide: Boolean=false;
-
 begin
   if (Collisioned and OtherModel.Collisioned) and (not FModelDead) and (not OtherModel.FModelDead) then
     begin
+      // BOX > BOX
       if (self.CollisionMode = cmBBox) and (OtherModel.CollisionMode = cmBBox) then
       isCollide:= CheckCollisionBoxes(Self.FCollisionBBox,OtherModel.FCollisionBBox);
+
+      // BOX > SPHERE
+      if (self.CollisionMode = cmBBox) and (OtherModel.CollisionMode = cmSphere) then
+      isCollide:= CheckCollisionBoxSphere(Self.FCollisionBBox,OtherModel.FCollisionSphere,OtherModel.FCollisionRadius);
+
+      // SPHERE > BOX
+      if (self.CollisionMode = cmSphere) and (OtherModel.CollisionMode = cmBBox) then
+      isCollide:= CheckCollisionBoxSphere(OtherModel.FCollisionBBox,Self.FCollisionSphere,Self.FCollisionRadius);
+
+      // SPHERE > SPHERE
+      if (self.CollisionMode = cmSphere) and (OtherModel.CollisionMode = cmSphere) then
+      isCollide:= CheckCollisionSpheres(Self.FCollisionSphere,Self.FCollisionRadius,OtherModel.FCollisionSphere,
+      OtherModel.FCollisionRadius);
     end;
 
   if IsCollide then
@@ -304,6 +598,8 @@ begin
   Scale:=1.0;
   CollisionMode:=cmBBox;
   Collisioned:=false;
+  CollisionRadius:=1;
+  DebugDraw:=false;
 end;
 
 destructor TTinyModel.Destroy;
@@ -351,6 +647,13 @@ procedure TTinyModel.Render;
         dmWires: DrawModelWires(FModel, FPosition, FScale, FColor);  // Draw a model wires (with texture if set)
         dmWiresEX: DrawModelWiresEx(FModel,FPosition,FRotationAxis, FRotationAngle, FScaleEx,FColor); // Draw a model wires with extended parameters
       end;
+
+  if DebugDraw then
+  begin
+   if CollisionMode = cmBBox then DrawBoundingBox(FCollisionBBox,BLUE);
+   if CollisionMode = cmSphere then DrawSphereWires(FCollisionSphere, FCollisionRadius,8,8,GREEN);
+  end;
+
 end;
 
 procedure TTinyModel.Dead;
@@ -381,6 +684,12 @@ procedure TTinyModelEngine.SetDrawDebugGrid(AValue: boolean);
 begin
   if FDrawDebugGrid=AValue then Exit;
   FDrawDebugGrid:=AValue;
+end;
+
+procedure TTinyModelEngine.SetDrawBebugModel(AValue: Boolean);
+begin
+  if FDrawBebugModel=AValue then Exit;
+  FDrawBebugModel:=AValue;
 end;
 
 procedure TTinyModelEngine.SetDrawDistance(AValue: single);
@@ -432,7 +741,9 @@ procedure TTinyModelEngine.Render(Camera:TCamera);
 
    for i:=0 to FModelList.Count-1 do
      begin
-      if FDrawDistance >0 then
+     if FDrawBebugModel then TTinyModel(FModelList.Items[i]).DebugDraw:=True
+     else TTinyModel(FModelList.Items[i]).DebugDraw:=False;
+     if FDrawDistance >0 then
        begin
          if Vector3Distance(Camera.Position, TTinyModel(FModelList.Items[i]).Position) <= FDrawDistance
          then TTinyModel(FModelList.Items[i]).Render;
@@ -466,6 +777,10 @@ begin
   FGridSlice:= Slices;
   FGridSpace:= Spacing;
 end;
+
+
+initialization
+InitCosSinTables();
 
 end.
 

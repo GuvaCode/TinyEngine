@@ -46,7 +46,6 @@ begin
    Camera.projection := CAMERA_PERSPECTIVE;              // Camera mode type
    SetCameraMode(Camera, CAMERA_ORBITAL);
 
-
    Model:=TTinyModel.Create(Engine);
    Model.LoadModel('data/models/test.m3d');
 end;

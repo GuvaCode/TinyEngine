@@ -39,7 +39,7 @@ begin
    Engine:= TTinyModelEngine.Create;
    Engine.DrawDebugGrid:=True;
 
-   Camera.position:=Vector3Create( 1.5, 1.5, 1.5 ); // Camera position ;
+   Camera.position:=Vector3Create( 1.5, 1.5, 1.5 );       // Camera position ;
    Camera.target := Vector3Create( 0.0, 0.4, 0.0 );      // Camera looking at point
    Camera.up := Vector3Create( 0.0, 1.0, 0.0 );          // Camera up vector (rotation towards target)
    Camera.fovy := 45.0;                                  // Camera field-of-view Y
