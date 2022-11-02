@@ -8,8 +8,8 @@ unit TinyEngine;
 interface
 
 uses
-  teDescription, teApplication, teModelEngine, rlFPCamera, rlFreeCamera, 
-  rlTPCamera, LazarusPackageIntf;
+  teDescription, teApplication, teModelEngine, teLights, teTPCamera, 
+  teFreeCamera, teFPCamera, LazarusPackageIntf;
 
 implementation
 

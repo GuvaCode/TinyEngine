@@ -21,20 +21,24 @@
         <UnitName Value="teApplication"/>
       </Item>
       <Item>
-        <Filename Value="../source/temodelengine.pas"/>
+        <Filename Value="../source/teModelEngine.pas"/>
         <UnitName Value="teModelEngine"/>
       </Item>
       <Item>
-        <Filename Value="../source/camera/rlfpcamera.pas"/>
-        <UnitName Value="rlFPCamera"/>
+        <Filename Value="../source/teLights.pas"/>
+        <UnitName Value="teLights"/>
       </Item>
       <Item>
-        <Filename Value="../source/camera/rlfreecamera.pas"/>
-        <UnitName Value="rlFreeCamera"/>
+        <Filename Value="../source/camera/teTPCamera.pas"/>
+        <UnitName Value="teTPCamera"/>
       </Item>
       <Item>
-        <Filename Value="../source/camera/rltpcamera.pas"/>
-        <UnitName Value="rlTPCamera"/>
+        <Filename Value="../source/camera/teFreeCamera.pas"/>
+        <UnitName Value="teFreeCamera"/>
+      </Item>
+      <Item>
+        <Filename Value="../source/camera/teFPCamera.pas"/>
+        <UnitName Value="teFPcamera"/>
       </Item>
     </Files>
     <RequiredPkgs>

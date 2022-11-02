@@ -1,19 +1,4 @@
-{
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   raylibExtras * Utilities and Shared Components for Raylib                  ┃
-┃                                                                              ┃
-┃   TrlTPCamera * Third Person Camera Example                                  ┃
-┃                                                                              ┃
-┃   Original source code in C                                                  ┃
-┃   https://github.com/raylib-extras/extras-c/blob/main/cameras                ┃
-┃   Copyright (c) 2021 Jeffery Myers                                           ┃
-┃                                                                              ┃
-┃   Pacal translation (c) 2021 Gunko Vadim                                     ┃
-┃   https://github.com/GuvaCode                                                ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-}
-
-unit rlTPCamera;
+unit teTPCamera;
 
 {$mode ObjFPC}{$H+}
 
@@ -23,8 +8,8 @@ uses
   raylib, raymath, rlgl, math;
 
 type
-  PrlTPCameraControls = ^TrlTPCameraControls;
-  TrlTPCameraControls = longint;
+  PTinyTPCameraControls = ^TTinyTPCameraControls;
+  TTinyTPCameraControls = longint;
     const
       MOVE_FRONT   = 0;
       MOVE_BACK    = 1;
@@ -40,8 +25,8 @@ type
       LAST_CONTROL = 11;
 
 type
-  PrlTPCamera = ^TrlTPCamera;
-  TrlTPCamera = record
+  PTinyTPCamera = ^TTinyTPCamera;
+  TTinyTPCamera = record
   // keys used to control the camera
   ControlsKeys: array[0..LAST_CONTROL] of longint; // keys used to control the camera
   MoveSpeed: TVector3; // the speed in units/second to move. X = sidestep, Y = jump/fall, Z = forward
@@ -65,32 +50,32 @@ type
   end;
 
   // called to initialize a camera to default values
-  procedure rlTPCameraInit(camera: PrlTPCamera; fovY: single; position: TVector3);
+  procedure TPCameraInit(camera: PTinyTPCamera; fovY: single; position: TVector3);
 
   // turn the use of mouselook on/off, also updates the cursor visibility and what button to use, set button to -1 to disable mouse
-  procedure rlTPCameraUseMouse(camera: PrlTPCamera; useMouse: boolean; button: longint);
+  procedure TPCameraUseMouse(camera: PTinyTPCamera; useMouse: boolean; button: longint);
 
   // Get the camera's position in world (or game) space
-  function rlTPCameraGetPosition(camera: PrlTPCamera): TVector3;
+  function TPCameraGetPosition(camera: PTinyTPCamera): TVector3;
 
   // Set the camera's position in world (or game) space
-  procedure rlTPCameraSetPosition(camera: PrlTPCamera; position: TVector3);
+  procedure TPCameraSetPosition(camera: PTinyTPCamera; position: TVector3);
 
   // returns the ray from the camera through the center of the view
-  function rlFPCameraGetViewRay(camera: PrlTPCamera): TRay;
+  function FPCameraGetViewRay(camera: PTinyTPCamera): TRay;
   // update the camera for the current frame
-  procedure rlTPCameraUpdate(camera: PrlTPCamera);
+  procedure TPCameraUpdate(camera: PTinyTPCamera);
 
   // start drawing using the camera, with near/far plane support
-  procedure rlTPCameraBeginMode3D(camera: PrlTPCamera);
+  procedure TPCameraBeginMode3D(camera: PTinyTPCamera);
 
   // end drawing with the camera
-  procedure rlTPCameraEndMode3D;
+  procedure TPCameraEndMode3D;
 
 
 implementation
 
-procedure ResizeTPOrbitCameraView(camera: PrlTPCamera);
+procedure ResizeTPOrbitCameraView(camera: PTinyTPCamera);
 var width, height: single;
 begin
     if camera = nil then exit;
@@ -100,7 +85,7 @@ begin
     if height <> 0 then camera^.FOV.x := camera^.FOV.y * (width / height);
 end;
 
-procedure rlTPCameraInit(camera: PrlTPCamera; fovY: single; position: TVector3);
+procedure TPCameraInit(camera: PTinyTPCamera; fovY: single; position: TVector3);
 begin
   if camera = nil then exit;
   camera^.ControlsKeys[0]:= KEY_W;
@@ -118,8 +103,8 @@ begin
   camera^.MoveSpeed:= Vector3Create( 3,3,3 );
   camera^.TurnSpeed:= Vector2Create( 90,90 );
   camera^.MouseSensitivity:= 600;
-  camera^.MinimumViewY:= 1.0;
-  camera^.MaximumViewY:= 89.0;
+  camera^.MinimumViewY:= -89.0;
+  camera^.MaximumViewY:= 0.0;
   camera^.Focused:= IsWindowFocused();
   camera^.CameraPullbackDistance:= 5;
   camera^.ViewAngles:= Vector2Create( 0,0 );
@@ -136,10 +121,10 @@ begin
   camera^.FarPlane := 1000.0;
 
   ResizeTPOrbitCameraView(camera);
-  rlTPCameraUseMouse(camera, true, 1);
+  TPCameraUseMouse(camera, true, 1);
 end;
 
-procedure rlTPCameraUseMouse(camera: PrlTPCamera; useMouse: boolean;
+procedure TPCameraUseMouse(camera: PTinyTPCamera; useMouse: boolean;
   button: longint);
 var showCursor: boolean;
 begin
@@ -153,17 +138,17 @@ begin
     else if (showCursor and IsWindowFocused) then  EnableCursor;
 end;
 
-function rlTPCameraGetPosition(camera: PrlTPCamera): TVector3;
+function TPCameraGetPosition(camera: PTinyTPCamera): TVector3;
 begin
   result:= camera^.CameraPosition;
 end;
 
-procedure rlTPCameraSetPosition(camera: PrlTPCamera; position: TVector3);
+procedure TPCameraSetPosition(camera: PTinyTPCamera; position: TVector3);
 begin
   camera^.CameraPosition:= position;
 end;
 
-function rlFPCameraGetViewRay(camera: PrlTPCamera): TRay;
+function FPCameraGetViewRay(camera: PTinyTPCamera): TRay;
 var rRay:TRay;
 begin
 //  rRay.position:=camera^.CameraPosition;
@@ -174,7 +159,7 @@ begin
   result:=rRay;
 end;
 
-function GetSpeedForAxis(camera: PrlTPCamera; axis: TrlTPCameraControls; speed: single): single;
+function GetSpeedForAxis(camera: PTinyTPCamera; axis: TTinyTPCameraControls; speed: single): single;
 var key: longint;
     factor: single;
 begin
@@ -187,7 +172,7 @@ begin
   if IsKeyDown(camera^.ControlsKeys[axis]) then result:= speed * GetFrameTime * factor;
 end;
 
-procedure rlTPCameraUpdate(camera: PrlTPCamera);
+procedure TPCameraUpdate(camera: PTinyTPCamera);
 var showCursor, useMouse: boolean;
     mousePositionDelta: TVector2;
     mouseWheelMove, turnRotation, tiltRotation: single;
@@ -236,7 +221,7 @@ begin
    if turnRotation <> 0 then
        camera^.ViewAngles.x -= turnRotation * DEG2RAD
    else if (useMouse and camera^.Focused) then
-       camera^.ViewAngles.x -= (mousePositionDelta.x / -camera^.MouseSensitivity);
+       camera^.ViewAngles.x -= (mousePositionDelta.x / camera^.MouseSensitivity);
 
    if tiltRotation <> 0 then
        camera^.ViewAngles.y += tiltRotation * DEG2RAD
@@ -277,7 +262,7 @@ begin
    camera^.ViewCamera.position:= Vector3Add(camera^.CameraPosition, camPos); // offset the camera position by the vector from the target position
 end;
 
-procedure SetupCamera(camera: PrlTPCamera; aspect: single);
+procedure SetupCamera(camera: PTinyTPCamera; aspect: single);
 var top, right: double;
     matView: TMatrix;
 begin
@@ -313,7 +298,7 @@ begin
 end;
 
 // start drawing using the camera, with near/far plane support
-procedure rlTPCameraBeginMode3D(camera: PrlTPCamera);
+procedure TPCameraBeginMode3D(camera: PTinyTPCamera);
 var aspect: single;
 begin
    if camera = nil then exit;
@@ -322,7 +307,7 @@ begin
 end;
 
 // end drawing with the camera
-procedure rlTPCameraEndMode3D;
+procedure TPCameraEndMode3D;
 begin
   EndMode3D;
 end;

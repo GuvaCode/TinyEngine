@@ -1,18 +1,4 @@
-{
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   raylibExtras * Utilities and Shared Components for Raylib                  ┃
-┃                                                                              ┃
-┃    rlFPCamera * First person camera                                          ┃
-┃                                                                              ┃
-┃   Original source code in C                                                  ┃
-┃   https://github.com/raylib-extras/extras-c/blob/main/cameras                ┃
-┃   Copyright (c) 2021 Jeffery Myers                                           ┃
-┃                                                                              ┃
-┃   Pacal translation (c) 2021 Gunko Vadim                                     ┃
-┃   https://github.com/GuvaCode                                                ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-}
-unit rlFPCamera;
+unit teFPCamera;
 
 
 {$mode ObjFPC}{$H+}
@@ -23,8 +9,8 @@ uses
   raylib, rlgl, raymath, math;
 
 type
-  PrlFPCameraControls = ^TrlFPCameraControls;
-  TrlFPCameraControls = longint;
+  PTinyFPCameraControls = ^TTinyFPCameraControls;
+  TTinyFPCameraControls = longint;
     const
       MOVE_FRONT   = 0;
       MOVE_BACK    = 1;
@@ -40,8 +26,8 @@ type
       LAST_CONTROL = 11;
 
 type
-  PrlFPCamera = ^TrlFPCamera;
-  TrlFPCamera = record
+  PTinyFPCamera = ^TTinyFPCamera;
+  TTinyFPCamera = record
     ControlsKeys: array[0..LAST_CONTROL] of longint; // keys used to control the camera
     MoveSpeed: TVector3; // the speed in units/second to move. X = sidestep, Y = jump/fall, Z = forward
     TurnSpeed: TVector2; // the speed for turning when using keys to look degrees/second
@@ -72,36 +58,36 @@ type
   end;
 
   // called to initialize a camera to default values
-  procedure rlFPCameraInit(camera: PrlFPCamera; fovY: single; position: TVector3);
+  procedure FPCameraInit(camera: PTinyFPCamera; fovY: single; position: TVector3);
 
   // called to update field of view in X when window resizes
-  procedure rlFPCameraResizeView(camera: PrlFPCamera);
+  procedure FPCameraResizeView(camera: PTinyFPCamera);
 
   // turn the use of mouselook on/off, also updates the cursor visibility
-  procedure rlFPCameraUseMouse(camera: PrlFPCamera; useMouse: boolean);
+  procedure FPCameraUseMouse(camera: PTinyFPCamera; useMouse: boolean);
 
   // Get the camera's position in world (or game) space
-  function rlFPCameraGetPosition(camera: PrlFPCamera): TVector3;
+  function FPCameraGetPosition(camera: PTinyFPCamera): TVector3;
 
   // Set the camera's position in world (or game) space
-  procedure rlFPCameraSetPosition(camera: PrlFPCamera; pos: TVector3);
+  procedure FPCameraSetPosition(camera: PTinyFPCamera; pos: TVector3);
 
   // returns the ray from the camera through the center of the view
-  function rlFPCameraGetViewRay(camera: PrlFPCamera): TRay;
+  function FPCameraGetViewRay(camera: PTinyFPCamera): TRay;
 
   // update the camera for the current frame
-  procedure rlFPCameraUpdate(camera: PrlFPCamera);
+  procedure FPCameraUpdate(camera: PTinyFPCamera);
 
   // start drawing using the camera, with near/far plane support
-  procedure rlFPCameraBeginMode3D(camera: PrlFPCamera);
+  procedure FPCameraBeginMode3D(camera: PTinyFPCamera);
 
   // end drawing with the camera
-  procedure rlFPCameraEndMode3D;
+  procedure FPCameraEndMode3D;
 
 
 implementation
 
-procedure rlFPCameraInit(camera: PrlFPCamera; fovY: single; position: TVector3);
+procedure FPCameraInit(camera: PTinyFPCamera; fovY: single; position: TVector3);
 begin
   if camera = nil then exit;
   camera^.ControlsKeys[0]  := KEY_W;
@@ -151,11 +137,11 @@ begin
   camera^.NearPlane := 0.01;
   camera^.FarPlane := 1000.0;
 
-  rlFPCameraResizeView(camera);
-  rlFPCameraUseMouse(camera, camera^.UseMouse);
+  FPCameraResizeView(camera);
+  FPCameraUseMouse(camera, camera^.UseMouse);
 end;
 
-procedure rlFPCameraResizeView(camera: PrlFPCamera);
+procedure FPCameraResizeView(camera: PTinyFPCamera);
 var width,height: single;
 begin
    if camera = nil then exit;
@@ -165,7 +151,7 @@ begin
    if height <> 0 then camera^.FOV.x := camera^.FOV.y * (width / height);
 end;
 
-procedure rlFPCameraUseMouse(camera: PrlFPCamera; useMouse: boolean);
+procedure FPCameraUseMouse(camera: PTinyFPCamera; useMouse: boolean);
 begin
   if camera = nil then exit;
   camera^.UseMouse := useMouse;
@@ -174,12 +160,12 @@ begin
   if (not useMouse and IsWindowFocused) then EnableCursor;
 end;
 
-function rlFPCameraGetPosition(camera: PrlFPCamera): TVector3;
+function FPCameraGetPosition(camera: PTinyFPCamera): TVector3;
 begin
   result:=camera^.CameraPosition;
 end;
 
-procedure rlFPCameraSetPosition(camera: PrlFPCamera; pos: TVector3);
+procedure FPCameraSetPosition(camera: PTinyFPCamera; pos: TVector3);
 var forward_:TVector3;
 begin
    camera^.CameraPosition := pos;
@@ -188,7 +174,7 @@ begin
    camera^.ViewCamera.target := Vector3Add(camera^.CameraPosition, forward_);
 end;
 
-function rlFPCameraGetViewRay(camera: PrlFPCamera): TRay;
+function FPCameraGetViewRay(camera: PTinyFPCamera): TRay;
 var rRay:TRay;
 begin
   rRay.position:=camera^.CameraPosition;
@@ -196,7 +182,7 @@ begin
   result:=rRay;
 end;
 
-function GetSpeedForAxis(camera: PrlFPCamera; axis: TrlFPCameraControls; speed: single): single;
+function GetSpeedForAxis(camera: PTinyFPCamera; axis: TTinyFPCameraControls; speed: single): single;
 var key:longint;
     factor:single;
 begin
@@ -215,7 +201,7 @@ begin
         result:= speed * GetFrameTime() * factor;
 end;
 
-procedure rlFPCameraUpdate(camera: PrlFPCamera);
+procedure FPCameraUpdate(camera: PTinyFPCamera);
 var mousePositionDelta: TVector2;
     direction: array[0..MOVE_DOWN] of single;
     turnRotation, tiltRotation, eyeOfset, swingDelta, viewBobbleDampen: single;
@@ -251,12 +237,12 @@ begin
     if turnRotation <> 0 then
         camera^.ViewAngles.x -= turnRotation * DEG2RAD
     else if (camera^.UseMouse and camera^.Focused) then
-        camera^.ViewAngles.x += (mousePositionDelta.x / -camera^.MouseSensitivity);
+        camera^.ViewAngles.x += (mousePositionDelta.x / camera^.MouseSensitivity);
 
     if tiltRotation <> 0 then
         camera^.ViewAngles.y += tiltRotation * DEG2RAD
     else if (camera^.UseMouse and camera^.Focused) then
-        camera^.ViewAngles.y += (mousePositionDelta.y / -camera^.MouseSensitivity);
+        camera^.ViewAngles.y += (mousePositionDelta.y / camera^.MouseSensitivity);
 
     // Angle clamp
     if camera^.ViewAngles.y < camera^.MinimumViewY * DEG2RAD then
@@ -265,12 +251,12 @@ begin
         camera^.ViewAngles.y := camera^.MaximumViewY * DEG2RAD;
 
     // Recalculate camera target considering translation and rotation
-    target:= Vector3Transform(Vector3Create(0,0,1),MatrixRotateXYZ(Vector3Create(camera^.ViewAngles.y,-camera^.ViewAngles.x,0)));
+    target:= Vector3Transform(Vector3Create(0,0,1),MatrixRotateZYX(Vector3Create(camera^.ViewAngles.y,-camera^.ViewAngles.x,0)));
 
     if camera^.AllowFlight then
         camera^.Forwards := target
     else
-        camera^.Forwards := Vector3Transform(Vector3Create(0,0,1), MatrixRotateXYZ(Vector3Create(0,-camera^.ViewAngles.x,0)));
+        camera^.Forwards := Vector3Transform(Vector3Create(0,0,1), MatrixRotateZYX(Vector3Create(0,-camera^.ViewAngles.x,0)));
 
     camera^.Right:= Vector3Create(camera^.Forwards.z * -1.0, 0, camera^.Forwards.x );
 
@@ -306,12 +292,11 @@ begin
     camera^.ViewCamera.target.z := camera^.ViewCamera.position.z + target.z;
 end;
 
-procedure SetupCamera(camera: PrlFPCamera; aspect: single);
+procedure SetupCamera(camera: PTinyFPCamera; aspect: single);
 var top,right: double;
     matView: TMatrix;
-    i: integer;
 begin
-    rlDrawRenderBatchActive();			// Draw Buffers (Only OpenGL 3+ and ES2)
+    rlDrawRenderBatchActive();	        // Draw Buffers (Only OpenGL 3+ and ES2)
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
     rlPushMatrix();                     // Save previous matrix, which contains the settings for the 2d ortho projection
     rlLoadIdentity();                   // Reset current matrix (projection)
@@ -341,14 +326,14 @@ begin
     rlEnableDepthTest();                // Enable DEPTH_TEST for 3D
 end;
 
-procedure rlFPCameraBeginMode3D(camera: PrlFPCamera);
+procedure FPCameraBeginMode3D(camera: PTinyFPCamera);
 var aspect: single;
 begin
   aspect:=GetScreenWidth / GetScreenHeight;
   SetupCamera(camera, aspect);
 end;
 
-procedure rlFPCameraEndMode3D;
+procedure FPCameraEndMode3D;
 begin
   EndMode3D();
 end;

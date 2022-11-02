@@ -12,7 +12,7 @@
 *   LICENSE: zlib/libpng
 *
 *   Copyright (c) 2017-2020 Victor Fisac (@victorfisac) and Ramon Santamaria (@raysan5)
-*   Pascal conversion (c) 2021 Gunko Vadim (@guvacode)
+*   Pascal conversion (c) 2022 Gunko Vadim (@guvacode)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -30,7 +30,7 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************}
-unit rlights;
+unit teLights;
 
 {$mode ObjFPC}{$H+}
 

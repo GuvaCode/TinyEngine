@@ -5,7 +5,7 @@ unit munit;
 interface
 
 uses
- raylib, raymath, teApplication, teModelEngine, rlights;
+ raylib, raymath, teApplication, teModelEngine, teLights;
 
 const
 GLSL_VERSION = 330;
