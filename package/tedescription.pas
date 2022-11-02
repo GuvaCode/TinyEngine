@@ -86,7 +86,7 @@ begin
   'program Game1;'+LE+
    ''+LE+
   'uses'+LE+
-  '   SysUtils;'+LE+
+  'Cmem, SysUtils;'+LE+
   ''+LE+
   ''+LE+
   'var Game: TGame;'+LE+
@@ -120,7 +120,7 @@ end;
 
 function TTinyEngineFileUnit.GetInterfaceUsesSection: string;
 begin
-  Result:='cmem, raylib, teApplication'
+  Result:='Raylib, teApplication'
 end;
 
 function TTinyEngineFileUnit.GetUnitDirectives: string;

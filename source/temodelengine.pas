@@ -642,9 +642,9 @@ procedure TTinyModel.Render;
     FColor:=WHITE;
     if Assigned(FEngine) then
       case FDrawMode of
-        dmNormal: DrawModel(FModel, FPosition, FScale, WHITE); // Draw 3d model with texture
-        dmEx: DrawModelEx(FModel, FPosition, FRotationAxis, FRotationAngle, FScaleEx, FColor); // Draw a model with extended parameters
-        dmWires: DrawModelWires(FModel, FPosition, FScale, FColor);  // Draw a model wires (with texture if set)
+        dmNormal:  DrawModel(FModel, FPosition, FScale, FColor); // Draw 3d model with texture
+        dmEx:      DrawModelEx(FModel, FPosition, FRotationAxis, FRotationAngle, FScaleEx, FColor); // Draw a model with extended parameters
+        dmWires:   DrawModelWires(FModel, FPosition, FScale, FColor);  // Draw a model wires (with texture if set)
         dmWiresEX: DrawModelWiresEx(FModel,FPosition,FRotationAxis, FRotationAngle, FScaleEx,FColor); // Draw a model wires with extended parameters
       end;
 
@@ -734,7 +734,7 @@ procedure TTinyModelEngine.Update;
 end;
 
 procedure TTinyModelEngine.Render(Camera:TCamera);
-  var i: longint;
+var i: Integer;
 
   begin
    BeginMode3D(Camera);        // Begin 3d mode drawing

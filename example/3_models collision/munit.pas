@@ -245,8 +245,8 @@ begin
   inherited Render;
   Engine.Render(Camera); // render engine
 
-  DrawText('press w,a,s,d or cursor key or gamepad for moved', 10 , 10 , 10, GRAY);
-  DrawText('press m for show/hide debug draw collision', 10 , 20 , 10, GRAY);
+  DrawText('press w,a,s,d or cursor key or gamepad for moved', 10 , 10 , 10, BLACK);
+  DrawText('press m for show/hide debug draw collision', 10 , 20 , 10, BLACK);
   DrawText('(c) model by @quaternius', 660 , 580, 10, GRAY);
 end;
 

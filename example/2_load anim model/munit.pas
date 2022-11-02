@@ -48,7 +48,7 @@ begin
 
 
    Model:=TTinyAnimatedModel.Create(Engine);
-   Model.LoadModel('data/models/test.m3d');
+   Model.LoadModel('data/models/Bunny.m3d');
    Model.AnimationLoop:=true;
    Model.AnimationIndex:=0;
    Model.AnimationSpeed:=30 ;

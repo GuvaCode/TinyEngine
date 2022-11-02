@@ -1,7 +1,7 @@
-program loadmodel;
+program shaderlight;
 
 uses
-    SysUtils, munit;
+    cmem, SysUtils, munit;
 
 
 var Game: TGame;
