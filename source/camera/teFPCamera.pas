@@ -204,7 +204,7 @@ end;
 procedure FPCameraUpdate(camera: PTinyFPCamera);
 var mousePositionDelta: TVector2;
     direction: array[0..MOVE_DOWN] of single;
-    turnRotation, tiltRotation, eyeOfset, swingDelta, viewBobbleDampen: single;
+    turnRotation, tiltRotation, eyeOffset, swingDelta, viewBobbleDampen: single;
     target: TVector3;
 begin
     if camera = nil then exit;
@@ -267,7 +267,7 @@ begin
 
     camera^.ViewCamera.position := camera^.CameraPosition;
 
-    eyeOfset := camera^.PlayerEyesPosition;
+    eyeOffset := camera^.PlayerEyesPosition;
 
     if camera^.ViewBobbleFreq > 0 then
     begin
@@ -276,7 +276,7 @@ begin
 
         camera^.CurrentBobble += swingDelta * camera^.ViewBobbleFreq;
         viewBobbleDampen := 8.0;
-        eyeOfset -= sin(camera^.CurrentBobble / viewBobbleDampen) * camera^.ViewBobbleMagnatude;
+        eyeOffset -= sin(camera^.CurrentBobble / viewBobbleDampen) * camera^.ViewBobbleMagnatude;
         camera^.ViewCamera.up.x := sin(camera^.CurrentBobble / (viewBobbleDampen * 2)) * camera^.ViewBobbleWaverMagnitude;
         camera^.ViewCamera.up.z := -sin(camera^.CurrentBobble / (viewBobbleDampen * 2)) * camera^.ViewBobbleWaverMagnitude;
     end
@@ -286,7 +286,7 @@ begin
         camera^.ViewCamera.up.x := 0;
         camera^.ViewCamera.up.z := 0;
     end;
-    camera^.ViewCamera.position.y += eyeOfset;
+    camera^.ViewCamera.position.y += eyeOffset;
     camera^.ViewCamera.target.x := camera^.ViewCamera.position.x + target.x;
     camera^.ViewCamera.target.y := camera^.ViewCamera.position.y + target.y;
     camera^.ViewCamera.target.z := camera^.ViewCamera.position.z + target.z;

@@ -47,15 +47,17 @@ begin
   InitWindow(800, 600, 'raylib [Game Project]');
   SetWindowState(FLAG_VSYNC_HINT or FLAG_MSAA_4X_HINT);
   SetTargetFPS(60);
-
+   self.ClearBackgroundColor:=black;
   Engine:= TTinyModelEngine.Create;
   Engine.DrawDebugGrid:=true;
 
+
   player:=TTinyAnimatedModel.Create(Engine);
-  player.LoadModel('data/models/Character.m3d');
+  player.LoadModel('data/models/adder.m3d');
   player.AnimationLoop:=true;
-  player.AnimationIndex:=12;
+  player.AnimationIndex:=0;
   player.AnimationSpeed:=30 ;
+  player.PositionY:=0.5;
 
   // Define the camera to look into our 3d world
   camera.position := Vector3Create(2.0,4.0,6.0);    // Camera position
@@ -65,37 +67,39 @@ begin
   camera.projection := CAMERA_PERSPECTIVE;          // Camera mode type
 
   // Load plane model from a generated mesh
-  modelPlain := LoadModelFromMesh(GenMeshPlane(10.0, 10.0, 3, 3));
+ // modelPlain := LoadModelFromMesh(GenMeshPlane(10.0, 10.0, 3, 3));
 
   shader := LoadShader(TextFormat('data/shaders/glsl%i/lighting.vs', GLSL_VERSION),
   TextFormat('data/shaders/glsl%i/lighting.fs', GLSL_VERSION));
 
   // Get some required shader loactions
-   shader.locs[SHADER_LOC_VECTOR_VIEW] := GetShaderLocation(shader, 'viewPos');
+   shader.locs[SHADER_LOC_MAP_SPECULAR] := GetShaderLocation(shader, 'viewPos');
   // NOTE: "matModel" location name is automatically assigned on shader loading,
   // no need to get the location again if using that uniform name
   //shader.locs[SHADER_LOC_MATRIX_MODEL] := GetShaderLocation(shader, 'matModel');
 
   // Ambient light level (some basic lighting)
   ambientLoc := GetShaderLocation(shader, 'ambient');
-{
-  shaderVol[0]:=0.1;
+
+  shaderVol[0]:=0.0;
   shaderVol[1]:=0.1;
   shaderVol[2]:=0.1;
   shaderVol[3]:=0.1;
-  SetShaderValue(shader, ambientLoc, @shaderVol, SHADER_UNIFORM_VEC4);
-}
-
+//  SetShaderValue(shader, ambientLoc, @shaderVol, SHADER_UNIFORM_VEC4);
+ //matProjection
+ ambientLoc := GetShaderLocation(shader, 'matProjection');
+ shaderVol[0]:=1.0;
+ SetShaderValue(shader, ambientLoc, @shaderVol, SHADER_UNIFORM_VEC4);
 
   // Assign out lighting shader to model
-  modelPlain.materials[0].shader := shader;
+ // modelPlain.materials[0].shader := shader;
 
   for i:= 0 to player.Model.materialCount-1 do
   player.Model.materials[i].shader:= shader;
 
   // Using 4 point lights: gold, red, green and blue
-  lights[0] := CreateLight(LIGHT_POINT, Vector3Create( -2, 1, -2 ), Vector3Zero(), YELLOW, shader);
-  lights[1] := CreateLight(LIGHT_POINT, Vector3Create( 2, 1, 2 ), Vector3Zero(), RED, shader);
+  lights[0] := CreateLight(LIGHT_POINT, Vector3Create( 0, 10, -4 ), Vector3Zero(), ColorCreate(255,209,0,255), shader);
+  lights[1] := CreateLight(LIGHT_POINT, Vector3Create( 0, 10, -4 ), Vector3Zero(), White, shader);
   lights[2] := CreateLight(LIGHT_POINT, Vector3Create( -2, 1, 2 ), Vector3Zero(), GREEN, shader);
   lights[3] := CreateLight(LIGHT_POINT, Vector3Create( 2, 1, -2 ), Vector3Zero(), BLUE, shader);
 
@@ -127,7 +131,7 @@ begin
   cameraPos[1] := camera.position.y;
   cameraPos[2] := camera.position.z;
 
-  SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], @cameraPos, SHADER_UNIFORM_VEC3);
+  SetShaderValue(shader, shader.locs[SHADER_LOC_MAP_SPECULAR], @cameraPos, SHADER_UNIFORM_VEC3);
   Engine.Update;  // update engine
 
 end;
@@ -138,7 +142,7 @@ begin
   inherited Render;
 
   BeginMode3D(camera);
-  DrawModel(modelPlain, Vector3Zero(), 1.0, WHITE);
+ // DrawModel(modelPlain, Vector3Zero(), 1.0, WHITE);
 
    // Draw spheres to show where the lights are
    for i:=0 to MAX_LIGHTS-1 do
