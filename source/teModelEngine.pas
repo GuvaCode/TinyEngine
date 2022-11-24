@@ -322,8 +322,8 @@ end;
 procedure TTinyPlayerModel.SetDirection(AValue: Single);
 begin
   FDirection := AValue;
-  FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
-  FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.x := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.z := m_Cos(Trunc(FDirection)) * Speed;
   FVelocity.y := sin(DEG2RAD * -FRotation) * Speed ;
 end;
 
@@ -339,8 +339,8 @@ begin
   else
   if FSpeed < FMinSpeed then  FSpeed := FMinSpeed;
   FSpeed := AValue;
-  FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
-  FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.x := m_Sin(Trunc(FDirection)) * Speed;
+  FVelocity.z := m_Cos(Trunc(FDirection)) * Speed;
   FVelocity.y := sin(DEG2RAD * -FRotation) * Speed ;
 end;
 
@@ -613,12 +613,20 @@ procedure TTinyModel.Update;
 var transform: TMatrix;
 
 begin
+
   transform := MatrixIdentity;
 
   transform := MatrixMultiply(transform,MatrixRotateX(DEG2RAD*FRotationAxis.x));
   transform := MatrixMultiply(transform,MatrixRotateY(DEG2RAD*FRotationAxis.y));
   transform := MatrixMultiply(transform,MatrixRotateZ(DEG2RAD*FRotationAxis.z));
+{
+  transform := MatrixRotateZYX(Vector3Create(DEG2RAD*FRotationAxis.x,
+                                             DEG2RAD*FRotationAxis.y,
+                                             DEG2RAD*FRotationAxis.z));
 
+ }
+
+//  FModel.transform := MatrixIdentity;
   FModel.transform:=transform;
 
   { if (CollisionMode = cmSphere) then
@@ -724,12 +732,11 @@ end;
 
 procedure TTinyModelEngine.Update;
   var i: integer;
-      matScale: TMatrix;
   begin
-//  UpdateCamera(@FCamera);
+ //  for i:= FModelList.Count -1 downto 0 do
    for i := 0 to FModelList.Count - 1 do  // update all model and animation
       begin
-       TTinyModel(FModelList.Items[i]).Update;
+        TTinyModel(FModelList.Items[i]).Update;
       end;
 end;
 
