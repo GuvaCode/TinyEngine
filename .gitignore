@@ -6,7 +6,7 @@ temp/*.compiled
 temp/
 
 binary/*
-!binary/resources/
+!binary/data/
 
 
 
