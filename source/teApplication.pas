@@ -22,7 +22,6 @@ type
     constructor Create; virtual;
     // Free the application
     destructor Destroy; override;
-
     // Initializes the application
     procedure Init; virtual;
     // Shutdown the application

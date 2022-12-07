@@ -47,7 +47,7 @@ begin
    SetCameraMode(Camera, CAMERA_ORBITAL);
 
    Model:=TTinyModel.Create(Engine);
-   Model.LoadModel('data/models/adder.glb');
+   Model.LoadModel('data/models/Character.m3d');
 end;
 
 procedure TGame.Update;

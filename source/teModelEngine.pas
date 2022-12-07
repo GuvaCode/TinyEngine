@@ -16,7 +16,6 @@ type
   TTinyModel = class;
 
   { TTinyModelEngine }
-
   TTinyModelEngine = class
     private
       FDrawBebugModel: Boolean;
@@ -25,31 +24,48 @@ type
       FDrawSkeleton: boolean;
       FGridSlice: longint;
       FGridSpace: single;
-
+      function GetModel(const Index: Integer): TTinyModel;
+      function GetModelsCount: Integer;
       procedure SetDrawBebugModel(AValue: Boolean);
       procedure SetDrawDebugGrid(AValue: boolean);
       procedure SetDrawDistance(AValue: single);
       procedure SetDrawSkeleton(AValue: boolean);
-
     protected
-      FModelList: specialize TList<TTinyModel>; // list of model
-      FModelDeadList: specialize TList<TTinyModel>; // model dead list
+     FModelDeadList: specialize TList<TTinyModel>; // model dead list
+     FModelList: specialize TList<TTinyModel>; // list of model
     public
       constructor Create;
       destructor Destroy; override;
+      procedure Add(const Model: TTinyModel);
+      procedure Remove(const Model: TTinyModel);
+      procedure Change(Model: TTinyModel; Dest: TTinyModelEngine);
       procedure Update;  // update engine
       procedure Render(Camera: TCamera); virtual; // render engine
       procedure ClearDeadModel;  // clear of death model
       procedure SetDebugGrid(slices:longint; spacing:single); // set grid size and slice
-    published
+      property Items[const Index: Integer]: TTinyModel read GetModel; default;
+   published
       property DrawSkeleton: Boolean read FDrawSkeleton write SetDrawSkeleton;
       property DrawDebugGrid: Boolean read FDrawDebugGrid write SetDrawDebugGrid;
       property DrawBebugModel: Boolean read FDrawBebugModel write SetDrawBebugModel;
       property DrawDistance: Single read FDrawDistance write SetDrawDistance;
+      property ModelsCount: Integer  read GetModelsCount;
   end;
 
-  { TTinyModel }
+  { TTinyModelPack }
+  TTinyModelPack = class
+    public
+      Count: Integer;
+      ModelName: array of string;
+      Model: array of TModel;
+      ModelAnimation: array of PModelAnimation;
+      ModelAnimCount: array of Integer;
+      function LoadFromFile(FileName: String): Boolean;
+      constructor Create;
+      destructor Destroy; override;
+   end;
 
+  { TTinyModel }
   TTinyModel = class
     private
       FCollisionBBox: TBoundingBox;
@@ -57,13 +73,14 @@ type
       FCollisionMode: TTinyModelCollisionMode;
       FCollisionRadius: Single;
       FCollisionSphere: TVector3;
+      FDebugColor: TColorB;
       FDebugDraw: Boolean;
       FDrawMode: TTinyEngineDrawMode;
-      FName: String;
       FPosition: TVector3;
       FRotationAngle: single;
       FRotationAxis: TVector3;
       FScale: Single;
+      FModelName: String;
       function GetPositionX: Single;
       function GetPositionY: Single;
       function GetPositionZ: Single;
@@ -73,7 +90,6 @@ type
       procedure SetCollisionSphere(AValue: TVector3);
       procedure SetDebugDraw(AValue: Boolean);
       procedure SetDrawMode(AValue: TTinyEngineDrawMode);
-      procedure SetName(AValue: String);
       procedure SetPosition(AValue: TVector3);
       procedure SetPositionX(AValue: Single);
       procedure SetPositionY(AValue: Single);
@@ -89,15 +105,17 @@ type
       FTexture: TTexture;
       procedure DoCollision(CollisonModel: TTinyModel); virtual;
     public
-      constructor Create(Engine: TTinyModelEngine); virtual;
+      constructor Create(ModelEngine: TTinyModelEngine); virtual;
       destructor Destroy; override;
       procedure Update; overload; virtual;
       procedure Render; virtual;
       procedure Dead;
       procedure LoadModel(FileName: String); virtual;
       procedure LoadModelTexture(TextureFileName: String; MaterialMap: TMaterialMapIndex);
+      procedure LoadFromModelPack(Index: Integer; ModelPack: TTinyModelPack); virtual;
+      procedure LoadFromModelPack(Name: String; ModelPack: TTinyModelPack); virtual;
       procedure Collision; overload; virtual;
-
+      procedure Assign(const Value: TModel); virtual;
       property DrawMode: TTinyEngineDrawMode read FDrawMode write SetDrawMode;
       property Model: TModel read FModel write FModel;
       property RotationAxis: TVector3 read FRotationAxis write SetRotationAxis;
@@ -107,44 +125,48 @@ type
       property PositionZ: Single read GetPositionZ write SetPositionZ;
       property RotationAngle: single read FRotationAngle write SetRotationAngle;
       property Scale: Single read FScale write SetScale;
-      property Name: String read FName write SetName;
+      property ModelName: String read FModelName write FModelName;
       property DebugDraw: Boolean read FDebugDraw write SetDebugDraw;
-
+      property DebugColor: TColorB read FDebugColor write FDebugColor;
       property Collisioned: Boolean read FCollisioned write FCollisioned;
       property CollisionMode: TTinyModelCollisionMode read FCollisionMode write SetCollisionMode;
       property CollisionBBox: TBoundingBox read FCollisionBBox write SetCollisionBBox;
       property CollisionSphere: TVector3 read FCollisionSphere write SetCollisionSphere;
       property CollisionRadius: Single read FCollisionRadius write SetCollisionRadius;
+      property Engine: TTinyModelEngine read FEngine write FEngine;
   end;
 
-  
   { TTinyAnimatedModel }
-
   TTinyAnimatedModel = class(TTinyModel)
   private
+    FAnimationCount: Integer;
     FAnimationIndex: Integer;
     FAnimationLoop: boolean;
     FAnimationSpeed: Single;
+    FAnimEnded: Boolean;
     FAnims: PModelAnimation;
     FAnimFrameCounter: Single;
-    FAnimCont: integer;
+    FAnimCont: Integer;
     procedure SetAnimationIndex(AValue: Integer);
     procedure SetAnimationLoop(AValue: boolean);
     procedure SetAnimationSpeed(AValue: Single);
   protected
     procedure UpdateModelAnimation;
   public
-    constructor Create(Engine: TTinyModelEngine); override;
+    constructor Create(ModelEngine: TTinyModelEngine); override;
+    procedure AssignAnim(const Value: PModelAnimation);
     procedure Update; override;
     procedure LoadModel(FileName: String); override;
+    procedure LoadFromModelPack(Index: integer; ModelPack: TTinyModelPack); override;
+    procedure LoadFromModelPack(Name: String; ModelPack: TTinyModelPack); override;
     property Anims: PModelAnimation read FAnims write FAnims;
     property AnimationIndex: Integer read FAnimationIndex write SetAnimationIndex;
     property AnimationSpeed: Single read FAnimationSpeed write SetAnimationSpeed;
     property AnimationLoop: Boolean read FAnimationLoop write SetAnimationLoop;
+    property AnimEnded: Boolean read FAnimEnded;
   end;
 
   { TTinyPlayerModel }
-
   TTinyPlayerModel = class(TTinyAnimatedModel)
   private
     FAcc: Single;
@@ -159,7 +181,7 @@ type
     procedure SetRotation(AValue: Single);
     procedure SetSpeed(AValue: Single);
   public
-    constructor Create(Engine: TTinyModelEngine); override;
+    constructor Create(ModelEngine: TTinyModelEngine); override;
     procedure Update; override;
     procedure Accelerate; virtual;
     procedure Deccelerate; virtual;
@@ -172,30 +194,6 @@ type
     property Direction: Single read FDirection write SetDirection;
     property Rotation: Single read FRotation write SetRotation;
   end;
-
-    { TTinyJumperModel }
-    TTinyJumperModel = class(TTinyPlayerModel)
-     private
-         FJumpCount: Integer;
-         FJumpSpeed: Single;
-         FJumpHeight: Single;
-         FMaxFallSpeed: Single;
-         FDoJump: Boolean;
-         FJumpState: TTinyModelJumpState;
-         procedure SetJumpState(Value: TTinyModelJumpState);
-    public
-         constructor Create(Engine: TTinyModelEngine); override;
-         procedure Update; override;
-         procedure Accelerate; override;
-         procedure Deccelerate; override;
-         property JumpCount: Integer read FJumpCount write FJumpCount;
-         property JumpState: TTinyModelJumpState read FJumpState write SetJumpState;
-         property JumpSpeed: Single read FJumpSpeed write FJumpSpeed;
-         property JumpHeight: Single read FJumpHeight write FJumpHeight;
-         property MaxFallSpeed: Single read FMaxFallSpeed write FMaxFallSpeed;
-         property DoJump: Boolean read  FDoJump write FDoJump;
-    end;
-
 
   var    cosTable : array[ 0..360 ] of Single;
          sinTable : array[ 0..360 ] of Single;
@@ -236,89 +234,50 @@ for i := 0 to 360 do
   end;
 end;
 
-{ TTinyJumperModel }
-
-procedure TTinyJumperModel.SetJumpState(Value: TTinyModelJumpState);
+{ TTinyModelPack }
+function TTinyModelPack.LoadFromFile(FileName: String): Boolean;
 begin
-  if FJumpState <> Value then
+  if not FileExists(PChar(FileName)) then
     begin
-         FJumpState := Value;
-         case Value of
-              jsNone,
-              jsFalling:
-              begin
-                FVelocity.Y := 0;
-              end;
-         end;
+      Result := False;
+      Exit;
     end;
+  SetLength(Model, Count + 1);
+  SetLength(ModelName, Count + 1);
+  SetLength(ModelAnimation, Count + 1);
+  SetLength(ModelAnimCount, Count + 1);
+  Inc(Count);
+  Model[Count - 1] := LoadModel(PChar(FileName));
+  ModelName[Count - 1] := ChangeFileExt(ExtractFileName(FileName),'');
+  ModelAnimation[Count - 1]:= nil;
+  ModelAnimation[Count - 1]:= LoadModelAnimations(PChar(FileName), @ModelAnimCount[Count - 1]);
+  Result := True;
 end;
 
-constructor TTinyJumperModel.Create(Engine: TTinyModelEngine);
+constructor TTinyModelPack.Create;
 begin
-  inherited Create(Engine);
-  FVelocity.X := 0;
-  FVelocity.Y := 0;
-  MaxSpeed := FMaxSpeed;
-  FDirection := 0;
-  FJumpState := jsNone;
-  FJumpSpeed := 0.25;
-  FJumpHeight := 5;
-  Acceleration := 0.2;
-  Decceleration := 0.2;
-  FMaxFallSpeed := 10;
-  DoJump:= False;
+//
 end;
 
-procedure TTinyJumperModel.Update;
+destructor TTinyModelPack.Destroy;
+var  i: Integer;
 begin
-  case FJumpState of
-     jsNone:
-       begin
-         if DoJump then
-         begin
-           FJumpState := jsJumping;
-           FVelocity.Y := + FJumpHeight;
-         end;
-       end;
-     jsJumping:
-       begin
-         FPosition.Y := FPosition.Y + FVelocity.Y * GetFrameTime;
-         FVelocity.Y := FVelocity.Y + FJumpSpeed;
-         if Velocity.Y > 0 then
-           FJumpState := jsFalling;
-       end;
-     jsFalling:
-       begin
-         FPosition.Y := FPosition.Y + FVelocity.Y * GetFrameTime;
-         FVelocity.Y := FVelocity.Y - FJumpSpeed;
-         if FVelocity.Y > FMaxFallSpeed then
-            FVelocity.Y := FMaxFallSpeed;
-       end;
-   end;
-   DoJump := False;
-
-   inherited Update;
-end;
-
-procedure TTinyJumperModel.Accelerate;
-begin
-  inherited Accelerate;
-end;
-
-procedure TTinyJumperModel.Deccelerate;
-begin
-  inherited Deccelerate;
-{  if FSpeed <> FMaxSpeed then
-    begin
-      FSpeed:= FSpeed+FAcc;
-      if FSpeed < FMaxSpeed then FSpeed := FMaxSpeed;
-        FVelocity.X := m_Sin(Trunc(FDirection)) * Speed;
-        FVelocity.Z := m_Sin(Trunc(FDirection)) * Speed;
-     end;}
+  for i := 0 to Count - 1 do
+  begin
+    ModelName[i] := '';
+    UnloadModel(Model[i]);
+    UnloadModelAnimations(ModelAnimation[i],ModelAnimCount[i]);
+    ModelAnimCount[i]:=0;
+  end;
+  SetLength(ModelName, 0);
+  SetLength(Model, 0);
+  SetLength(ModelAnimation, 0);
+  SetLength(ModelAnimCount, 0);
+  Count := 0;
+  inherited Destroy;
 end;
 
 { TTinyPlayerModel }
-
 procedure TTinyPlayerModel.SetDirection(AValue: Single);
 begin
   FDirection := AValue;
@@ -344,9 +303,9 @@ begin
   FVelocity.y := sin(DEG2RAD * -FRotation) * Speed ;
 end;
 
-constructor TTinyPlayerModel.Create(Engine: TTinyModelEngine);
+constructor TTinyPlayerModel.Create(ModelEngine: TTinyModelEngine);
 begin
-  inherited Create(Engine);
+  inherited Create(ModelEngine);
   FVelocity:=Vector3Create(0,0,0);
   Direction:=0;
   Acceleration:=0;
@@ -371,8 +330,8 @@ begin
    FSpeed := FSpeed + FAcc;
    if FSpeed > FMaxSpeed then
    FSpeed := FMaxSpeed;
-   FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
-   FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+   FVelocity.x := m_Cos(Trunc(FDirection))  * Speed;
+   FVelocity.z := m_Sin(Trunc(FDirection))  * Speed;
    FVelocity.y := sin(DEG2RAD * -FRotation) * Speed;
  end;
 end;
@@ -384,14 +343,13 @@ begin
    FSpeed := FSpeed - FDcc;
    if FSpeed < FMinSpeed then
    FSpeed := FMinSpeed;
-   FVelocity.x := m_Cos(Trunc(FDirection)) * Speed;
-   FVelocity.z := m_Sin(Trunc(FDirection)) * Speed;
+   FVelocity.x := m_Cos(Trunc(FDirection))  * Speed;
+   FVelocity.z := m_Sin(Trunc(FDirection))  * Speed;
    FVelocity.y := sin(DEG2RAD * -FRotation) * Speed;
  end;
 end;
 
 { TTinyAnimatedModel }
-
 procedure TTinyAnimatedModel.SetAnimationIndex(AValue: Integer);
 begin
   if (AValue >= FAnimCont) or (Avalue < 0) or (FAnimationIndex = AValue)  then Exit;
@@ -399,6 +357,7 @@ begin
   FAnimFrameCounter := 0;
   FAnimationIndex := AValue;
 end;
+
 
 procedure TTinyAnimatedModel.SetAnimationLoop(AValue: boolean);
 begin
@@ -414,26 +373,50 @@ end;
 
 procedure TTinyAnimatedModel.UpdateModelAnimation;
 begin
-  FAnimFrameCounter:= FAnimFrameCounter + FAnimationSpeed * GetFrameTime;
-  Raylib.UpdateModelAnimation(Fmodel, FAnims[FAnimationIndex], Round(FAnimFrameCounter));
+  try
+  if IsModelAnimationValid(FModel, FAnims^) then
+    begin
+      FAnimFrameCounter:= FAnimFrameCounter + FAnimationSpeed * GetFrameTime;
 
-  if (FAnimFrameCounter >= FAnims[FAnimationIndex].frameCount) and (FAnimationLoop) then
-      FAnimFrameCounter:=0
-     else
-  if FAnimFrameCounter >= FAnims[FAnimationIndex].frameCount then
-     FAnimFrameCounter:=FAnims[FAnimationIndex].frameCount;
+      if (FAnimFrameCounter >= FAnims[FAnimationIndex].frameCount) and (FAnimationLoop) then
+        begin
+          FAnimFrameCounter:=0;
+          FAnimEnded:=True;
+        end
+      else
+      if FAnimFrameCounter >= FAnims[FAnimationIndex].frameCount then
+        begin
+          FAnimFrameCounter:=FAnims[FAnimationIndex].frameCount;
+          FAnimEnded:=False;
+        end;
+
+       Raylib.UpdateModelAnimation(FModel, FAnims[FAnimationIndex], Round(FAnimFrameCounter));
+     end;
+  except
+    on E: Exception do
+    TraceLog(LOG_ERROR,PChar(FModelName + #32 + ' Animation is not valid') );
+  end;
+
+
 end;
 
-constructor TTinyAnimatedModel.Create(Engine: TTinyModelEngine);
+constructor TTinyAnimatedModel.Create(ModelEngine: TTinyModelEngine);
 begin
-  inherited Create(Engine);
+  inherited Create(ModelEngine);
   AnimationLoop:=True;
+end;
+
+procedure TTinyAnimatedModel.AssignAnim(const Value: PModelAnimation);
+begin
+ self.FAnims:=Value;
 end;
 
 procedure TTinyAnimatedModel.Update;
 begin
-  if Model.boneCount>0 then UpdateModelAnimation;// todo propv
+///  if (Model.boneCount>0) and  then UpdateModelAnimation;
+  UpdateModelAnimation;
   inherited Update;
+ // if Model.boneCount>0 then UpdateModelAnimation;
 end;
 
 procedure TTinyAnimatedModel.LoadModel(FileName: String);
@@ -442,6 +425,36 @@ begin
   FAnimCont:=0;
   FAnims:=LoadModelAnimations(PChar(FileName),@FAnimCont);
   FAnimationIndex:=0;
+end;
+
+procedure TTinyAnimatedModel.LoadFromModelPack(Index: integer;
+  ModelPack: TTinyModelPack);
+begin
+  inherited LoadFromModelPack(Index, ModelPack);
+  if (Index>=0) and (Index <= ModelPack.Count-1) then
+    begin
+      FAnimCont := ModelPack.ModelAnimCount[Index];
+      FAnims := ModelPack.ModelAnimation[Index];
+      if FAnimCont <= FAnimationIndex then FAnimationIndex:=0;
+    end;
+end;
+
+procedure TTinyAnimatedModel.LoadFromModelPack(Name: String;
+  ModelPack: TTinyModelPack);
+var i: integer;
+begin
+  for i := 0 to Length(ModelPack.ModelName) - 1 do
+  begin
+    if LowerCase(Name) = LowerCase(ModelPack.ModelName[i]) then
+    begin
+      FModelName:= ModelPack.ModelName[i];
+      FModel:= ModelPack.Model[i];
+      FAnimCont := ModelPack.ModelAnimCount[i];
+      FAnims := ModelPack.ModelAnimation[i];
+      if FAnimCont <= FAnimationIndex then FAnimationIndex:=0;
+      Exit;
+    end;
+  end;
 end;
 
 { TTinyModel }
@@ -485,11 +498,7 @@ begin
   FDrawMode:=AValue;
 end;
 
-procedure TTinyModel.SetName(AValue: String);
-begin
-  if FName=AValue then Exit;
-  FName:=AValue;
-end;
+
 
 function TTinyModel.GetPositionX: Single;
 begin
@@ -580,6 +589,11 @@ var I: Integer;
    end;
 end;
 
+procedure TTinyModel.Assign(const Value: TModel);
+begin
+  FModel:=Value;
+end;
+
 {$HINTS OFF}
 procedure TTinyModel.DoCollision(CollisonModel: TTinyModel);
 begin
@@ -587,9 +601,9 @@ begin
 end;
 {$HINTS ON}
 
-constructor TTinyModel.Create(Engine: TTinyModelEngine);
+constructor TTinyModel.Create(ModelEngine: TTinyModelEngine);
 begin
-  FEngine := Engine;
+  FEngine := ModelEngine;
   FEngine.FModelList.Add(Self);
   FModelDead:=False;
   DrawMode:=dmEx;
@@ -600,6 +614,7 @@ begin
   Collisioned:=false;
   CollisionRadius:=1;
   DebugDraw:=false;
+  FDebugColor:= ColorCreate(0,0,255,255);
 end;
 
 destructor TTinyModel.Destroy;
@@ -611,11 +626,8 @@ end;
 
 procedure TTinyModel.Update;
 var transform: TMatrix;
-
 begin
-
   transform := MatrixIdentity;
-
   transform := MatrixMultiply(transform,MatrixRotateX(DEG2RAD*FRotationAxis.x));
   transform := MatrixMultiply(transform,MatrixRotateY(DEG2RAD*FRotationAxis.y));
   transform := MatrixMultiply(transform,MatrixRotateZ(DEG2RAD*FRotationAxis.z));
@@ -628,7 +640,6 @@ begin
 
 //  FModel.transform := MatrixIdentity;
   FModel.transform:=transform;
-
   { if (CollisionMode = cmSphere) then
      Vector3Set(@FCollisionSphere,FPosition.x,FPosition.y,FPosition.z);
 
@@ -658,8 +669,8 @@ procedure TTinyModel.Render;
 
   if DebugDraw then
   begin
-   if CollisionMode = cmBBox then DrawBoundingBox(FCollisionBBox,BLUE);
-   if CollisionMode = cmSphere then DrawSphereWires(FCollisionSphere, FCollisionRadius,8,8,GREEN);
+   if CollisionMode = cmBBox then DrawBoundingBox(FCollisionBBox,DebugColor);
+   if CollisionMode = cmSphere then DrawSphereWires(FCollisionSphere, FCollisionRadius,8,8,DebugColor);
   end;
 
 end;
@@ -675,7 +686,7 @@ end;
 
 procedure TTinyModel.LoadModel(FileName: String);
 begin
-FModel:=RayLib.LoadModel(Pchar(FileName));
+  FModel:=RayLib.LoadModel(Pchar(FileName));
 end;
 
 procedure TTinyModel.LoadModelTexture(TextureFileName: String;
@@ -683,6 +694,29 @@ procedure TTinyModel.LoadModelTexture(TextureFileName: String;
 begin
   FTexture:= LoadTexture(PChar(TextureFileName));
   SetMaterialTexture(@FModel.materials[0], MaterialMap, FTexture);// loadig material map texture
+end;
+
+procedure TTinyModel.LoadFromModelPack(Index: Integer; ModelPack: TTinyModelPack);
+begin
+  if (Index>=0) and (Index <= ModelPack.Count-1) then
+    begin
+      FModelName:= ModelPack.ModelName[Index];
+      FModel := ModelPack.Model[Index];
+    end;
+end;
+
+procedure TTinyModel.LoadFromModelPack(Name: String; ModelPack: TTinyModelPack);
+var i: Integer;
+begin
+ for i := 0 to Length(ModelPack.ModelName) - 1 do
+  begin
+    if LowerCase(Name) = LowerCase(ModelPack.ModelName[i]) then
+    begin
+      FModelName:= ModelPack.ModelName[i];
+      FModel := ModelPack.Model[i];
+      Exit;
+    end;
+  end;
 end;
 
 
@@ -698,6 +732,22 @@ procedure TTinyModelEngine.SetDrawBebugModel(AValue: Boolean);
 begin
   if FDrawBebugModel=AValue then Exit;
   FDrawBebugModel:=AValue;
+end;
+
+function TTinyModelEngine.GetModelsCount: Integer;
+begin
+   if FModelList <> nil then
+     Result := FModelList.Count
+  else
+     Result := 0;
+end;
+
+function TTinyModelEngine.GetModel(const Index: Integer): TTinyModel;
+begin
+  if (FModelList <> nil) and (Index >= 0) and (Index < FModelList.Count) then
+    Result := FModelList[Index]
+  else
+    Result := nil;
 end;
 
 procedure TTinyModelEngine.SetDrawDistance(AValue: single);
@@ -730,14 +780,30 @@ begin
   inherited Destroy;
 end;
 
+procedure TTinyModelEngine.Add(const Model: TTinyModel);
+begin
+  FModelList.Insert(FModelList.Count, Model);
+end;
+
+procedure TTinyModelEngine.Remove(const Model: TTinyModel);
+begin
+  FModelList.Remove(Model);
+end;
+
+procedure TTinyModelEngine.Change(Model: TTinyModel; Dest: TTinyModelEngine);
+begin
+  Dest.Add(Model);
+  Model.Engine := Dest;
+  FModelList.Remove(Model);
+end;
+
 procedure TTinyModelEngine.Update;
-  var i: integer;
-  begin
- //  for i:= FModelList.Count -1 downto 0 do
-   for i := 0 to FModelList.Count - 1 do  // update all model and animation
-      begin
-        TTinyModel(FModelList.Items[i]).Update;
-      end;
+var i: integer;
+begin
+  for i := 0 to FModelList.Count - 1 do  // update all model and animation
+    begin
+      TTinyModel(FModelList.Items[i]).Update;
+    end;
 end;
 
 procedure TTinyModelEngine.Render(Camera:TCamera);
@@ -770,7 +836,7 @@ procedure TTinyModelEngine.ClearDeadModel;
     begin
       for i := 0 to FModelDeadList.Count - 1 do
       begin
-        if FModelDeadList.Count >= 1 then
+        if FModelDeadList.Count >= 0 then
         begin
           if TTinyModel(FModelDeadList.Items[i]).FModelDead = True then
           TTinyModel(FModelDeadList.Items[i]).FEngine.FModelList.Remove(FModelDeadList.Items[i]);

@@ -5,7 +5,7 @@ unit munit;
 interface
 
 uses
- raylib,rlgl, raymath, teApplication, teModelEngine, teLights;
+ raylib, rlgl, raymath, teApplication, teModelEngine, teLights;
 
 const
 GLSL_VERSION = 330;
@@ -46,14 +46,14 @@ begin
   inherited Init;
   InitWindow(800, 600, 'raylib [Game Project]');
   SetWindowState(FLAG_VSYNC_HINT or FLAG_MSAA_4X_HINT);
-  SetTargetFPS(60);
+  //SetTargetFPS(60);
    self.ClearBackgroundColor:=black;
   Engine:= TTinyModelEngine.Create;
   Engine.DrawDebugGrid:=true;
 
 
   player:=TTinyModel.Create(Engine);
-  player.LoadModel('data/models/test.m3d');
+  player.LoadModel('data/models/Trapdoor_open_mod.m3d');
   player.PositionY:=0.5;
   //player.Scale:=0.2;
 
