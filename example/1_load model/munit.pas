@@ -47,15 +47,16 @@ begin
    SetCameraMode(Camera, CAMERA_ORBITAL);
 
    Model:=TTinyModel.Create(Engine);
-   Model.LoadModel('data/models/Character.m3d');
+   Model.LoadModel('data/models/character/Fish.m3d');
+
+   Engine.DrawBebugModel:=True;
+
 end;
 
 procedure TGame.Update;
 begin
   inherited Update;
-
   UpdateCamera(@camera);
-
   Engine.Update;
 end;
 

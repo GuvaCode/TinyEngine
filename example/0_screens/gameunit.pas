@@ -98,7 +98,7 @@ begin
   inherited Init;
   InitWindow(800, 600, 'raylib [Screens demo]');
   SetWindowState(FLAG_VSYNC_HINT or FLAG_MSAA_4X_HINT);
-  //SetTargetFPS(60);
+  SetTargetFPS(60);
 
   // Disable esc to exit
   SetExitKey(0);
@@ -134,8 +134,6 @@ begin
     DrawText(PChar('Active screen: null'),10,20,10,BLACK);
   end;
     DrawText(PChar('Press esc to change screen render'),10,10,10,BLACK);
-
-   DrawFPS(70,10);
 end;
 
 procedure TGame.Resized;

@@ -44,8 +44,6 @@ var Current: Integer;
     listViewActive: longint = 0;
     listViewScrollIndex: longint = 0;
 
-
-
 implementation
 
 constructor TGame.Create;
@@ -53,12 +51,12 @@ begin
 end;
 
 procedure TGame.Init;
-var i: integer;
+var i : integer;
 begin
   inherited Init;
   InitWindow(900, 600, 'raylib [Game Project]');
   SetWindowState(FLAG_MSAA_4X_HINT);
- // SetTargetFPS(60);
+  SetTargetFPS(60);
   ClearBackgroundColor:=LIGHTGRAY;
 
   Engine:= TTinyModelEngine.Create;
@@ -108,18 +106,10 @@ begin
                                            TextFormat('data/shaders/glsl%i/skybox.fs', GLSL_VERSION));
 
 
-
   i:=MATERIAL_MAP_CUBEMAP;
   SetShaderValue(SkyBox.materials[0].shader, GetShaderLocation(SkyBox.materials[0].shader, 'environmentMap'), @i , SHADER_UNIFORM_INT);
-  SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, 'doGamma'), @i, SHADER_UNIFORM_INT);
-  SetShaderValue(skybox.materials[0].shader, GetShaderLocation(skybox.materials[0].shader, 'vflipped'), @i, SHADER_UNIFORM_INT);
 
-
-
-
-  LoadSkyBox('data/image/Skybox.png');
-
-
+  LoadSkyBox('data/image/SkyBox.png');
 end;
 
 procedure TGame.Update;
